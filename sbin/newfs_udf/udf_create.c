@@ -45,6 +45,8 @@ __RCSID("$NetBSD: udf_create.c,v 1.25 2015/06/16 23:18:55 christos Exp $");
 #include "unicode.h"
 #include "udf_create.h"
 
+struct udf_create_context context;
+struct udf_disclayout     layout;
 
 #if 0
 # ifndef DEBUG

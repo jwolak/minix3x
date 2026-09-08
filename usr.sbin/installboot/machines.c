@@ -68,11 +68,13 @@ struct ib_mach
 
 struct ib_mach * const machines[] = {
     &ib_mach_alpha,
+    &ib_mach_amd64,
     &ib_mach_amiga,
     &ib_mach_emips,
     &ib_mach_ews4800mips,
     &ib_mach_hp300,
     &ib_mach_hppa,
+    &ib_mach_i386,
     &ib_mach_landisk,
     &ib_mach_macppc,
     &ib_mach_news68k,

@@ -1,6 +1,8 @@
 # minix3x
 Experimental continuation and customization of MINIX.
 
+![MINIX running in QEMU](img/minix3.x_screen.png)
+
 ## Building the system
 
 Build the whole system (toolchain + release) using the `build.sh` script, e.g. for i386:

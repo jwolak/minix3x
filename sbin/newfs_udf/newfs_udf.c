@@ -100,7 +100,6 @@ int	 wrtrack_skew;
 int	 meta_perc = UDF_META_PERC;
 float	 meta_fract = (float) UDF_META_PERC / 100.0;
 
-
 /* --------------------------------------------------------------------- */
 
 /*

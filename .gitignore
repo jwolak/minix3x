@@ -51,3 +51,4 @@ lib/libc/compat__*
 .gdbinit
 
 *.img
+*.iso

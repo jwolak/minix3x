@@ -12,9 +12,9 @@ DBG=-O0
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
-.PATH: ${.CURDIR}/announce
+.PATH: ${.CURDIR}/system_announce
 
-SRCS+= announce.c clock.c cpulocals.c interrupt.c main.c proc.c system.c \
+SRCS+= system_announce.c clock.c cpulocals.c interrupt.c main.c proc.c system.c \
 	table.c utility.c usermapped_data.c
 
 LDADD+=	-ltimers -lsys -lexec 

@@ -33,7 +33,7 @@
 #include <minix/config.h>
 #include <minix/sysutil.h>
 
-#include "announce.h"
+#include "system_announce.h"
 
 void display_minix_startup_banner(struct system_announce_type *self)
 {
@@ -51,12 +51,12 @@ void display_minix_startup_banner(struct system_announce_type *self)
 	printf("%s", "MINIX is open source software, see http://www.minix3.org\n");
 }
 
-static struct announceType newAnnounce(void)
+static struct system_announce_type newAnnounce(void)
 {
-	struct announceType announce_;
-	announce_.display_minix_startup_banner = display_minix_startup_banner;
+	struct system_announce_type system_announce_;
+	system_announce_.display_minix_startup_banner = display_minix_startup_banner;
 
-	return announce_;
+	return system_announce_;
 }
 
-const struct announceClass announceType = {.new = newAnnounce};
+const struct system_announce_class system_announce_type = {.new = newAnnounce};

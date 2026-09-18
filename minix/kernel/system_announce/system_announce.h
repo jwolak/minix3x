@@ -30,16 +30,16 @@
  *
  */
 
-#ifndef __ANNOUNCE_H_
-#define __ANNOUNCE_H_
+#ifndef __SYSTEM_ANNOUNCE_H_
+#define __SYSTEM_ANNOUNCE_H_
 
-struct announceType {
+struct system_announce_type {
 	/* public members */
-	void (*display_minix_startup_banner)(struct announceType *self);
+	void (*display_minix_startup_banner)(struct system_announce_type *self);
 };
 
-extern const struct announceClass {
-	struct announceType (*new)(void);
-} announceType;
+extern const struct system_announce_class {
+	struct system_announce_type (*new)(void);
+} system_announce_type;
 
-#endif /* __ANNOUNCE_H_ */
+#endif /* __SYSTEM_ANNOUNCE_H_ */

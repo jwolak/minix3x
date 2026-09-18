@@ -20,7 +20,7 @@
 #include "direct_utils.h"
 #include "hw_intr.h"
 #include "arch_proto.h"
-#include "announce/announce.h"
+#include "system_announce/system_announce.h"
 
 #ifdef CONFIG_SMP
 #include "smp.h"
@@ -45,7 +45,7 @@ void bsp_finish_booting(void)
 	vm_running = 0;
 	krandom.random_sources = RANDOM_SOURCES;
 	krandom.random_elements = RANDOM_ELEMENTS;
-	struct announceType announce_instance = announceType.new();
+	struct system_announce_type announce_instance = system_announce_type.new();
 
 	/* MINIX is now ready. All boot image processes are on the ready queue.
 	 * Return to the assembly code to start running the current process.

@@ -48,7 +48,7 @@ void display_minix_startup_banner(struct announceType *self)
 #endif
 	       "Copyright 2016, Vrije Universiteit, Amsterdam, The Netherlands\n",
 	       OS_RELEASE);
-	printf("MINIX is open source software, see http://www.minix3.org\n");
+	printf("%s", "MINIX is open source software, see http://www.minix3.org\n");
 }
 
 static struct announceType newAnnounce(void)

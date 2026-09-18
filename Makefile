@@ -158,6 +158,14 @@ regression-tests: .PHONY .MAKE
 	${MAKEDIRTARGET} regress regress
 .endif
 
+.PHONY: format
+format:
+	@if [ -z "${FILE}" ]; then \
+		echo "Usage: make format FILE=path/to/file.c"; \
+		exit 1; \
+	fi
+	@./tools/format-file.sh "${FILE}"
+
 .if ${MKUNPRIVED} != "no"
 NOPOSTINSTALL=	# defined
 .endif

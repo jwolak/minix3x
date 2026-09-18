@@ -77,3 +77,35 @@ Notes:
 - Only one QEMU instance can have the image file open at a time — a
   `Failed to get "write" lock` error means another QEMU process is already
   using it.
+
+## Contributing / style guide
+
+This repository keeps a lightweight C formatting setup for local development.
+The project uses a repository-level [.clang-format](.clang-format) file and a
+small helper script at [tools/format-file.sh](tools/format-file.sh).
+
+Use the helper for a single file:
+
+```bash
+./tools/format-file.sh path/to/file.c
+```
+
+Or through the Makefile target:
+
+```bash
+make format FILE=path/to/file.c
+```
+
+The rule reads the project formatting settings from [.clang-format](.clang-format)
+and runs `clang-format` in place on the selected file. Keep formatting local to
+files you touch, rather than reformatting a large historical tree in one pass.
+
+## VS Code auto-format on save
+
+The workspace includes [.vscode/settings.json](.vscode/settings.json) with
+`editor.formatOnSave` enabled for C/C++ files. This makes VS Code format the
+current file automatically when it is saved, using the repository's
+`.clang-format` style.
+
+This is intended as a local convenience for contributors working in the repo,
+without forcing a broad, repository-wide reformat of historical MINIX code.

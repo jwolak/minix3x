@@ -20,6 +20,8 @@
 #include "direct_utils.h"
 #include "hw_intr.h"
 #include "arch_proto.h"
+#include "system_announce/system_announce.h"
+#include "bsp_bootstrap/bsp_bootstrap.h"
 
 #ifdef CONFIG_SMP
 #include "smp.h"
@@ -31,9 +33,6 @@
 
 /* dummy for linking */
 char ***_penviron;
-
-/* Prototype declarations for PRIVATE functions. */
-static void announce(void);
 
 void bsp_finish_booting(void)
 {
@@ -47,6 +46,7 @@ void bsp_finish_booting(void)
 	vm_running = 0;
 	krandom.random_sources = RANDOM_SOURCES;
 	krandom.random_elements = RANDOM_ELEMENTS;
+	struct system_announce_type announce_instance = system_announce_type.new();
 
 	/* MINIX is now ready. All boot image processes are on the ready queue.
 	 * Return to the assembly code to start running the current process.
@@ -55,7 +55,8 @@ void bsp_finish_booting(void)
 	/* it should point somewhere */
 	get_cpulocal_var(bill_ptr) = get_cpulocal_var_ptr(idle_proc);
 	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
-	announce(); /* print MINIX startup banner */
+
+	announce_instance.display_minix_startup_banner(&announce_instance);
 
 	/*
 	 * we have access to the cpu local run queue, only now schedule the processes.
@@ -117,6 +118,7 @@ void kmain(kinfo_t *local_cbi)
 	register struct proc *rp; /* process pointer */
 	register int i, j;
 	static int bss_test;
+	struct bsp_bootstrap bsp_bootstrap_instance = bsp_bootstrap.new();
 
 	/* bss sanity check */
 	assert(bss_test == 0);
@@ -311,6 +313,7 @@ void kmain(kinfo_t *local_cbi)
 		 * single CPU booting
 		 */
 		bsp_finish_booting();
+		// bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
 	}
 #else
 	/*
@@ -319,27 +322,10 @@ void kmain(kinfo_t *local_cbi)
 	 * never return here
 	 */
 	bsp_finish_booting();
+	// bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
 #endif
 
 	NOT_REACHABLE;
-}
-
-/*===========================================================================*
- *				announce				     *
- *===========================================================================*/
-static void announce(void)
-{
-	/* Display the MINIX startup banner. */
-	printf("\nMINIX %s. "
-#ifdef PAE
-	       "(PAE) "
-#endif
-#ifdef _VCS_REVISION
-	       "(" _VCS_REVISION ")\n"
-#endif
-	       "Copyright 2016, Vrije Universiteit, Amsterdam, The Netherlands\n",
-	       OS_RELEASE);
-	printf("MINIX is open source software, see http://www.minix3.org\n");
 }
 
 /*===========================================================================*

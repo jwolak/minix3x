@@ -20,6 +20,7 @@
 #include "direct_utils.h"
 #include "hw_intr.h"
 #include "arch_proto.h"
+#include "announce/announce.h"
 
 #ifdef CONFIG_SMP
 #include "smp.h"
@@ -56,6 +57,9 @@ void bsp_finish_booting(void)
 	get_cpulocal_var(bill_ptr) = get_cpulocal_var_ptr(idle_proc);
 	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
 	announce(); /* print MINIX startup banner */
+	struct announceType announce_instance;
+	announce_instance = announceType.new();
+	announce_instance.display_minix_startup_banner(&announce_instance);
 
 	/*
 	 * we have access to the cpu local run queue, only now schedule the processes.

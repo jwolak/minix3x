@@ -30,12 +30,25 @@
  *
  */
 
+#include <minix/config.h>
+#include <minix/sysutil.h>
+
 #include "announce.h"
 
 void display_minix_startup_banner(struct announceType *self)
 {
 	(void)self;
-	// printf("MINIX is open source software, see http://www.minix3.org\n");
+	/* Display the MINIX startup banner. */
+	printf("\nMINIX %s. "
+#ifdef PAE
+	       "(PAE) "
+#endif
+#ifdef _VCS_REVISION
+	       "(" _VCS_REVISION ")\n"
+#endif
+	       "Copyright 2016, Vrije Universiteit, Amsterdam, The Netherlands\n",
+	       OS_RELEASE);
+	printf("MINIX is open source software, see http://www.minix3.org\n");
 }
 
 static struct announceType newAnnounce(void)

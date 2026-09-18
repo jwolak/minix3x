@@ -21,6 +21,7 @@
 #include "hw_intr.h"
 #include "arch_proto.h"
 #include "system_announce/system_announce.h"
+#include "bsp_bootstrap/bsp_bootstrap.h"
 
 #ifdef CONFIG_SMP
 #include "smp.h"
@@ -117,6 +118,7 @@ void kmain(kinfo_t *local_cbi)
 	register struct proc *rp; /* process pointer */
 	register int i, j;
 	static int bss_test;
+	struct bsp_bootstrap bsp_bootstrap_instance = bsp_bootstrap.new();
 
 	/* bss sanity check */
 	assert(bss_test == 0);
@@ -311,6 +313,7 @@ void kmain(kinfo_t *local_cbi)
 		 * single CPU booting
 		 */
 		bsp_finish_booting();
+		bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
 	}
 #else
 	/*
@@ -319,6 +322,7 @@ void kmain(kinfo_t *local_cbi)
 	 * never return here
 	 */
 	bsp_finish_booting();
+	bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
 #endif
 
 	NOT_REACHABLE;

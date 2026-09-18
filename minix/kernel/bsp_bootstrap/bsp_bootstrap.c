@@ -30,33 +30,17 @@
  *
  */
 
-#include <minix/config.h>
-#include <minix/sysutil.h>
+#include "bsp_bootstrap.h"
 
-#include "announce.h"
+void finish_booting(struct bsp_bootstrap *self) { /* Implement the finish booting logic here */ }
 
-void display_minix_startup_banner(struct system_announce_type *self)
+static struct bsp_bootstrap newBspBootstrap(void)
 {
-	(void)self;
-	/* Display the MINIX startup banner. */
-	printf("\nMINIX %s. "
-#ifdef PAE
-	       "(PAE) "
-#endif
-#ifdef _VCS_REVISION
-	       "(" _VCS_REVISION ")\n"
-#endif
-	       "Copyright 2016, Vrije Universiteit, Amsterdam, The Netherlands\n",
-	       OS_RELEASE);
-	printf("%s", "MINIX is open source software, see http://www.minix3.org\n");
+	return (struct bsp_bootstrap){
+	    .finish_booting = &finish_booting,
+	};
 }
 
-static struct announceType newAnnounce(void)
-{
-	struct announceType announce_;
-	announce_.display_minix_startup_banner = display_minix_startup_banner;
-
-	return announce_;
-}
-
-const struct announceClass announceType = {.new = newAnnounce};
+const struct bsp_bootstrap_class bsp_bootstrap = {
+    .new = &newBspBootstrap,
+};

@@ -13,9 +13,10 @@ DBG=-O0
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
 .PATH: ${.CURDIR}/system_announce
+.PATH: ${.CURDIR}/bsp_bootstrap
 
 SRCS+= system_announce.c clock.c cpulocals.c interrupt.c main.c proc.c system.c \
-	table.c utility.c usermapped_data.c
+	table.c utility.c usermapped_data.c bsp_bootstrap.c
 
 LDADD+=	-ltimers -lsys -lexec 
 

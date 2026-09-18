@@ -313,7 +313,7 @@ void kmain(kinfo_t *local_cbi)
 		 * single CPU booting
 		 */
 		bsp_finish_booting();
-		bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
+		// bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
 	}
 #else
 	/*
@@ -322,7 +322,7 @@ void kmain(kinfo_t *local_cbi)
 	 * never return here
 	 */
 	bsp_finish_booting();
-	bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
+	// bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
 #endif
 
 	NOT_REACHABLE;

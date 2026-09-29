@@ -38,15 +38,13 @@ char ***_penviron;
  *===========================================================================*/
 void kmain(kinfo_t *local_cbi)
 {
-    /* Start the ball rolling. */
     struct boot_image *boot_image_entry; /* current boot image process entry pointer */
-    register int boot_image_index;       /* index of the current boot image entry */
     register struct proc *process;       /* process pointer */
-    static int bss_test;
+    static int bss_area_set_to_zero_check;
 
-    /* bss sanity check */
-    assert(bss_test == 0);
-    bss_test = 1;
+    /* BSS sanity check. Check that the BSS area has been set to zero */
+    assert(bss_area_set_to_zero_check == 0);
+    bss_area_set_to_zero_check = 1;
 
     /* save a global copy of the boot parameters */
     memcpy(&kinfo, local_cbi, sizeof(kinfo));
@@ -85,7 +83,7 @@ void kmain(kinfo_t *local_cbi)
         panic("expecting %d boot processes/modules, found %d", NR_BOOT_MODULES, kinfo.mbi.mi_mods_count);
 
     /* Set up proc table entries for processes in boot image. */
-    for (boot_image_index = 0; boot_image_index < NR_BOOT_PROCS; ++boot_image_index) {
+    for (int boot_image_index = 0; boot_image_index < NR_BOOT_PROCS; ++boot_image_index) {
         int schedulable_proc;
         proc_nr_t proc_nr;
         int ipc_to_m, kcalls;

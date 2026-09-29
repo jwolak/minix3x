@@ -41,7 +41,6 @@
 
 void bsp_finish_booting(void)
 {
-	int i;
 #if SPROFILE
 	sprofiling = 0; /* we're not profiling until instructed to */
 #endif			/* SPROFILE */
@@ -67,7 +66,7 @@ void bsp_finish_booting(void)
 	 * we have access to the cpu local run queue, only now schedule the processes.
 	 * We ignore the slots for the former kernel tasks
 	 */
-	for (i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++) {
+	for (int i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++) {
 		RTS_UNSET(proc_addr(i), RTS_PROC_STOP);
 	}
 	/*

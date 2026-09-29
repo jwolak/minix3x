@@ -39,9 +39,10 @@ char ***_penviron;
 void kmain(kinfo_t *local_cbi)
 {
 	/* Start the ball rolling. */
-	struct boot_image *ip;	  /* boot image pointer */
-	register struct proc *rp; /* process pointer */
-	register int i, j;
+	struct boot_image *boot_image_entry; /* current boot image process entry pointer */
+	register struct proc *rp;	     /* process pointer */
+	register int boot_image_index;
+	register int j;
 	static int bss_test;
 
 	/* bss sanity check */
@@ -86,25 +87,26 @@ void kmain(kinfo_t *local_cbi)
 		      kinfo.mbi.mi_mods_count);
 
 	/* Set up proc table entries for processes in boot image. */
-	for (i = 0; i < NR_BOOT_PROCS; ++i) {
+	for (boot_image_index = 0; boot_image_index < NR_BOOT_PROCS; ++boot_image_index) {
 		int schedulable_proc;
 		proc_nr_t proc_nr;
 		int ipc_to_m, kcalls;
 		sys_map_t map;
 
-		ip = &image[i]; /* process' attributes */
-		DEBUGEXTRA(("initializing %s... ", ip->proc_name));
-		rp = proc_addr(ip->proc_nr);   /* get process pointer */
-		ip->endpoint = rp->p_endpoint; /* ipc endpoint */
+		boot_image_entry = &image[boot_image_index]; /* process' attributes */
+		DEBUGEXTRA(("initializing %s... ", boot_image_entry->proc_name));
+		rp = proc_addr(boot_image_entry->proc_nr);   /* get process pointer */
+		boot_image_entry->endpoint = rp->p_endpoint; /* ipc endpoint */
 		rp->p_cpu_time_left = 0;
-		if (i < NR_TASKS) /* name (tasks only) */
-			strlcpy(rp->p_name, ip->proc_name, sizeof(rp->p_name));
+		if (boot_image_index < NR_TASKS) /* name (tasks only) */
+			strlcpy(rp->p_name, boot_image_entry->proc_name, sizeof(rp->p_name));
 
-		if (i >= NR_TASKS) {
+		if (boot_image_index >= NR_TASKS) {
 			/* Remember this so it can be passed to VM */
-			multiboot_module_t *mb_mod = &kinfo.module_list[i - NR_TASKS];
-			ip->start_addr = mb_mod->mod_start;
-			ip->len = mb_mod->mod_end - mb_mod->mod_start;
+			multiboot_module_t *mb_mod =
+			    &kinfo.module_list[boot_image_index - NR_TASKS];
+			boot_image_entry->start_addr = mb_mod->mod_start;
+			boot_image_entry->len = mb_mod->mod_end - mb_mod->mod_start;
 		}
 
 		reset_proc_accounting(rp);
@@ -176,7 +178,7 @@ void kmain(kinfo_t *local_cbi)
 		}
 
 		/* Arch-specific state initialization. */
-		arch_boot_proc(ip, rp);
+		arch_boot_proc(boot_image_entry, rp);
 
 		/* scheduling functions depend on proc_ptr pointing somewhere. */
 		if (!get_cpulocal_var(proc_ptr))

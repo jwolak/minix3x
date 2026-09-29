@@ -36,7 +36,7 @@ char ***_penviron;
 /*===========================================================================*
  *			kmain 	                             		*
  *===========================================================================*/
-void kmain(kinfo_t *local_cbi)
+void kmain(kinfo_t *boot_info)
 {
     struct boot_image *boot_image_entry; /* current boot image process entry pointer */
     register struct proc *process;       /* process pointer */
@@ -46,12 +46,12 @@ void kmain(kinfo_t *local_cbi)
     assert(bss_area_set_to_zero_check == 0);
     bss_area_set_to_zero_check = 1;
 
-    if (local_cbi == NULL) {
+    if (boot_info == NULL) {
         panic("kmain: boot info pointer is NULL");
     }
 
     /* save a global copy of the boot parameters */
-    memcpy(&kinfo, local_cbi, sizeof(kinfo));
+    memcpy(&kinfo, boot_info, sizeof(kinfo));
     memcpy(&kmess, kinfo.kmess, sizeof(kmess));
 
     /* We have done this exercise in pre_init so we expect this code

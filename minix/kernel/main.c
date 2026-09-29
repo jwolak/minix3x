@@ -46,6 +46,10 @@ void kmain(kinfo_t *local_cbi)
     assert(bss_area_set_to_zero_check == 0);
     bss_area_set_to_zero_check = 1;
 
+    if (local_cbi == NULL) {
+        panic("kmain: boot info pointer is NULL");
+    }
+
     /* save a global copy of the boot parameters */
     memcpy(&kinfo, local_cbi, sizeof(kinfo));
     memcpy(&kmess, kinfo.kmess, sizeof(kmess));

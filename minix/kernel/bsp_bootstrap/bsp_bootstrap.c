@@ -31,12 +31,12 @@
  */
 
 #include "bsp_bootstrap.h"
-#include "../clock.h"
+#include "kernel/clock.h"
 #include "arch_proto.h"
-#include "../system_announce/system_announce.h"
+#include "kernel/system_announce/system_announce.h"
 
 #ifdef CONFIG_SMP
-#include "smp.h"
+#include "kernel/smp.h"
 #endif
 
 void bsp_finish_booting(void)

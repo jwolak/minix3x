@@ -20,7 +20,6 @@
 #include "direct_utils.h"
 #include "hw_intr.h"
 #include "arch_proto.h"
-#include "system_announce/system_announce.h"
 #include "bsp_bootstrap/bsp_bootstrap.h"
 
 #ifdef CONFIG_SMP

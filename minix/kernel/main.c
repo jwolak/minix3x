@@ -34,80 +34,6 @@
 /* dummy for linking */
 char ***_penviron;
 
-void bsp_finish_booting(void)
-{
-	int i;
-#if SPROFILE
-	sprofiling = 0; /* we're not profiling until instructed to */
-#endif			/* SPROFILE */
-
-	cpu_identify();
-
-	vm_running = 0;
-	krandom.random_sources = RANDOM_SOURCES;
-	krandom.random_elements = RANDOM_ELEMENTS;
-	struct system_announce_type announce_instance = system_announce_type.new();
-
-	/* MINIX is now ready. All boot image processes are on the ready queue.
-	 * Return to the assembly code to start running the current process.
-	 */
-
-	/* it should point somewhere */
-	get_cpulocal_var(bill_ptr) = get_cpulocal_var_ptr(idle_proc);
-	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
-
-	announce_instance.display_minix_startup_banner(&announce_instance);
-
-	/*
-	 * we have access to the cpu local run queue, only now schedule the processes.
-	 * We ignore the slots for the former kernel tasks
-	 */
-	for (i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++) {
-		RTS_UNSET(proc_addr(i), RTS_PROC_STOP);
-	}
-	/*
-	 * Enable timer interrupts and clock task on the boot CPU.  First reset the
-	 * CPU accounting values, as the timer initialization (indirectly) uses them.
-	 */
-	cycles_accounting_init();
-
-	if (boot_cpu_init_timer(system_hz)) {
-		panic("FATAL : failed to initialize timer interrupts, "
-		      "cannot continue without any clock source!");
-	}
-
-	fpu_init();
-
-/* Warnings for sanity checks that take time. These warnings are printed
- * so it's a clear warning no full release should be done with them
- * enabled.
- */
-#if DEBUG_SCHED_CHECK
-	FIXME("DEBUG_SCHED_CHECK enabled");
-#endif
-#if DEBUG_VMASSERT
-	FIXME("DEBUG_VMASSERT enabled");
-#endif
-#if DEBUG_PROC_CHECK
-	FIXME("PROC check enabled");
-#endif
-
-#ifdef CONFIG_SMP
-	cpu_set_flag(bsp_cpu_id, CPU_IS_READY);
-	machine.processors_count = ncpus;
-	machine.bsp_id = bsp_cpu_id;
-#else
-	machine.processors_count = 1;
-	machine.bsp_id = 0;
-#endif
-
-	/* Kernel may no longer use bits of memory as VM will be running soon */
-	kernel_may_alloc = 0;
-
-	switch_to_user();
-	NOT_REACHABLE;
-}
-
 /*===========================================================================*
  *			kmain 	                             		*
  *===========================================================================*/
@@ -118,7 +44,6 @@ void kmain(kinfo_t *local_cbi)
 	register struct proc *rp; /* process pointer */
 	register int i, j;
 	static int bss_test;
-	struct bsp_bootstrap bsp_bootstrap_instance = bsp_bootstrap.new();
 
 	/* bss sanity check */
 	assert(bss_test == 0);
@@ -313,7 +238,6 @@ void kmain(kinfo_t *local_cbi)
 		 * single CPU booting
 		 */
 		bsp_finish_booting();
-		// bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
 	}
 #else
 	/*
@@ -322,7 +246,6 @@ void kmain(kinfo_t *local_cbi)
 	 * never return here
 	 */
 	bsp_finish_booting();
-	// bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
 #endif
 
 	NOT_REACHABLE;

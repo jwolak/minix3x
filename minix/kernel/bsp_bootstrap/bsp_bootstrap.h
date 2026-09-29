@@ -33,13 +33,6 @@
 #ifndef BSP_BOOTSTRAP_H
 #define BSP_BOOTSTRAP_H
 
-struct bsp_bootstrap {
-	/*public members*/
-	void (*finish_booting)(struct bsp_bootstrap *self);
-};
-
-extern const struct bsp_bootstrap_class {
-	struct bsp_bootstrap (*new)(void);
-} bsp_bootstrap;
+void bsp_finish_booting(void);
 
 #endif /* BSP_BOOTSTRAP_H */

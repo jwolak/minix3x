@@ -20,7 +20,6 @@
 #include "direct_utils.h"
 #include "hw_intr.h"
 #include "arch_proto.h"
-#include "system_announce/system_announce.h"
 #include "bsp_bootstrap/bsp_bootstrap.h"
 
 #ifdef CONFIG_SMP
@@ -34,91 +33,16 @@
 /* dummy for linking */
 char ***_penviron;
 
-void bsp_finish_booting(void)
-{
-	int i;
-#if SPROFILE
-	sprofiling = 0; /* we're not profiling until instructed to */
-#endif			/* SPROFILE */
-
-	cpu_identify();
-
-	vm_running = 0;
-	krandom.random_sources = RANDOM_SOURCES;
-	krandom.random_elements = RANDOM_ELEMENTS;
-	struct system_announce_type announce_instance = system_announce_type.new();
-
-	/* MINIX is now ready. All boot image processes are on the ready queue.
-	 * Return to the assembly code to start running the current process.
-	 */
-
-	/* it should point somewhere */
-	get_cpulocal_var(bill_ptr) = get_cpulocal_var_ptr(idle_proc);
-	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
-
-	announce_instance.display_minix_startup_banner(&announce_instance);
-
-	/*
-	 * we have access to the cpu local run queue, only now schedule the processes.
-	 * We ignore the slots for the former kernel tasks
-	 */
-	for (i = 0; i < NR_BOOT_PROCS - NR_TASKS; i++) {
-		RTS_UNSET(proc_addr(i), RTS_PROC_STOP);
-	}
-	/*
-	 * Enable timer interrupts and clock task on the boot CPU.  First reset the
-	 * CPU accounting values, as the timer initialization (indirectly) uses them.
-	 */
-	cycles_accounting_init();
-
-	if (boot_cpu_init_timer(system_hz)) {
-		panic("FATAL : failed to initialize timer interrupts, "
-		      "cannot continue without any clock source!");
-	}
-
-	fpu_init();
-
-/* Warnings for sanity checks that take time. These warnings are printed
- * so it's a clear warning no full release should be done with them
- * enabled.
- */
-#if DEBUG_SCHED_CHECK
-	FIXME("DEBUG_SCHED_CHECK enabled");
-#endif
-#if DEBUG_VMASSERT
-	FIXME("DEBUG_VMASSERT enabled");
-#endif
-#if DEBUG_PROC_CHECK
-	FIXME("PROC check enabled");
-#endif
-
-#ifdef CONFIG_SMP
-	cpu_set_flag(bsp_cpu_id, CPU_IS_READY);
-	machine.processors_count = ncpus;
-	machine.bsp_id = bsp_cpu_id;
-#else
-	machine.processors_count = 1;
-	machine.bsp_id = 0;
-#endif
-
-	/* Kernel may no longer use bits of memory as VM will be running soon */
-	kernel_may_alloc = 0;
-
-	switch_to_user();
-	NOT_REACHABLE;
-}
-
 /*===========================================================================*
  *			kmain 	                             		*
  *===========================================================================*/
 void kmain(kinfo_t *local_cbi)
 {
 	/* Start the ball rolling. */
-	struct boot_image *ip;	  /* boot image pointer */
-	register struct proc *rp; /* process pointer */
-	register int i, j;
+	struct boot_image *boot_image_entry; /* current boot image process entry pointer */
+	register int boot_image_index;	     /* index of the current boot image entry */
+	register struct proc *process;	     /* process pointer */
 	static int bss_test;
-	struct bsp_bootstrap bsp_bootstrap_instance = bsp_bootstrap.new();
 
 	/* bss sanity check */
 	assert(bss_test == 0);
@@ -162,28 +86,30 @@ void kmain(kinfo_t *local_cbi)
 		      kinfo.mbi.mi_mods_count);
 
 	/* Set up proc table entries for processes in boot image. */
-	for (i = 0; i < NR_BOOT_PROCS; ++i) {
+	for (boot_image_index = 0; boot_image_index < NR_BOOT_PROCS; ++boot_image_index) {
 		int schedulable_proc;
 		proc_nr_t proc_nr;
 		int ipc_to_m, kcalls;
 		sys_map_t map;
 
-		ip = &image[i]; /* process' attributes */
-		DEBUGEXTRA(("initializing %s... ", ip->proc_name));
-		rp = proc_addr(ip->proc_nr);   /* get process pointer */
-		ip->endpoint = rp->p_endpoint; /* ipc endpoint */
-		rp->p_cpu_time_left = 0;
-		if (i < NR_TASKS) /* name (tasks only) */
-			strlcpy(rp->p_name, ip->proc_name, sizeof(rp->p_name));
+		boot_image_entry = &image[boot_image_index]; /* process' attributes */
+		DEBUGEXTRA(("initializing %s... ", boot_image_entry->proc_name));
+		process = proc_addr(boot_image_entry->proc_nr);	  /* get process pointer */
+		boot_image_entry->endpoint = process->p_endpoint; /* ipc endpoint */
+		process->p_cpu_time_left = 0;
+		if (boot_image_index < NR_TASKS) /* name (tasks only) */
+			strlcpy(process->p_name, boot_image_entry->proc_name,
+				sizeof(process->p_name));
 
-		if (i >= NR_TASKS) {
+		if (boot_image_index >= NR_TASKS) {
 			/* Remember this so it can be passed to VM */
-			multiboot_module_t *mb_mod = &kinfo.module_list[i - NR_TASKS];
-			ip->start_addr = mb_mod->mod_start;
-			ip->len = mb_mod->mod_end - mb_mod->mod_start;
+			multiboot_module_t *mb_mod =
+			    &kinfo.module_list[boot_image_index - NR_TASKS];
+			boot_image_entry->start_addr = mb_mod->mod_start;
+			boot_image_entry->len = mb_mod->mod_end - mb_mod->mod_start;
 		}
 
-		reset_proc_accounting(rp);
+		reset_proc_accounting(process);
 
 		/* See if this process is immediately schedulable.
 		 * In that case, set its privileges now and allow it to run.
@@ -192,29 +118,29 @@ void kmain(kinfo_t *local_cbi)
 		 * RTS_NO_PRIV flag. They can only be scheduled once the root system
 		 * process has set their privileges.
 		 */
-		proc_nr = proc_nr(rp);
+		proc_nr = proc_nr(process);
 		schedulable_proc =
 		    (iskerneln(proc_nr) || isrootsysn(proc_nr) || proc_nr == VM_PROC_NR);
 		if (schedulable_proc) {
 			/* Assign privilege structure. Force a static privilege id. */
-			(void)get_priv(rp, static_priv_id(proc_nr));
+			(void)get_priv(process, static_priv_id(proc_nr));
 
 			/* Privileges for kernel tasks. */
 			if (proc_nr == VM_PROC_NR) {
-				priv(rp)->s_flags = VM_F;
-				priv(rp)->s_trap_mask = SRV_T;
+				priv(process)->s_flags = VM_F;
+				priv(process)->s_trap_mask = SRV_T;
 				ipc_to_m = SRV_M;
 				kcalls = SRV_KC;
-				priv(rp)->s_sig_mgr = SELF;
-				rp->p_priority = SRV_Q;
-				rp->p_quantum_size_ms = SRV_QT;
+				priv(process)->s_sig_mgr = SELF;
+				process->p_priority = SRV_Q;
+				process->p_quantum_size_ms = SRV_QT;
 			} else if (iskerneln(proc_nr)) {
 				/* Privilege flags. */
-				priv(rp)->s_flags = (proc_nr == IDLE ? IDL_F : TSK_F);
+				priv(process)->s_flags = (proc_nr == IDLE ? IDL_F : TSK_F);
 				/* Init flags. */
-				priv(rp)->s_init_flags = TSK_I;
+				priv(process)->s_init_flags = TSK_I;
 				/* Allowed traps. */
-				priv(rp)->s_trap_mask =
+				priv(process)->s_trap_mask =
 				    (proc_nr == CLOCK || proc_nr == SYSTEM ? CSK_T : TSK_T);
 				ipc_to_m = TSK_M; /* allowed targets */
 				kcalls = TSK_KC;  /* allowed kernel calls */
@@ -222,50 +148,54 @@ void kmain(kinfo_t *local_cbi)
 			/* Privileges for the root system process. */
 			else {
 				assert(isrootsysn(proc_nr));
-				priv(rp)->s_flags = RSYS_F;	/* privilege flags */
-				priv(rp)->s_init_flags = SRV_I; /* init flags */
-				priv(rp)->s_trap_mask = SRV_T;	/* allowed traps */
-				ipc_to_m = SRV_M;		/* allowed targets */
-				kcalls = SRV_KC;		/* allowed kernel calls */
-				priv(rp)->s_sig_mgr = SRV_SM;	/* signal manager */
-				rp->p_priority = SRV_Q;		/* priority queue */
-				rp->p_quantum_size_ms = SRV_QT; /* quantum size */
+				priv(process)->s_flags = RSYS_F;     /* privilege flags */
+				priv(process)->s_init_flags = SRV_I; /* init flags */
+				priv(process)->s_trap_mask = SRV_T;  /* allowed traps */
+				ipc_to_m = SRV_M;		     /* allowed targets */
+				kcalls = SRV_KC;		     /* allowed kernel calls */
+				priv(process)->s_sig_mgr = SRV_SM;   /* signal manager */
+				process->p_priority = SRV_Q;	     /* priority queue */
+				process->p_quantum_size_ms = SRV_QT; /* quantum size */
 			}
 
 			/* Fill in target mask. */
 			memset(&map, 0, sizeof(map));
 
 			if (ipc_to_m == ALL_M) {
-				for (j = 0; j < NR_SYS_PROCS; j++)
-					set_sys_bit(map, j);
+				for (int sys_proc_idx = 0; sys_proc_idx < NR_SYS_PROCS;
+				     ++sys_proc_idx) {
+					set_sys_bit(map, sys_proc_idx);
+				}
 			}
 
-			fill_sendto_mask(rp, &map);
+			fill_sendto_mask(process, &map);
 
 			/* Fill in kernel call mask. */
-			for (j = 0; j < SYS_CALL_MASK_SIZE; j++) {
-				priv(rp)->s_k_call_mask[j] = (kcalls == NO_C ? 0 : (~0));
+			for (int kernel_call_mask_idx = 0;
+			     kernel_call_mask_idx < SYS_CALL_MASK_SIZE; ++kernel_call_mask_idx) {
+				priv(process)->s_k_call_mask[kernel_call_mask_idx] =
+				    (kcalls == NO_C ? 0 : (~0));
 			}
 		} else {
 			/* Don't let the process run for now. */
-			RTS_SET(rp, RTS_NO_PRIV | RTS_NO_QUANTUM);
+			RTS_SET(process, RTS_NO_PRIV | RTS_NO_QUANTUM);
 		}
 
 		/* Arch-specific state initialization. */
-		arch_boot_proc(ip, rp);
+		arch_boot_proc(boot_image_entry, process);
 
 		/* scheduling functions depend on proc_ptr pointing somewhere. */
 		if (!get_cpulocal_var(proc_ptr))
-			get_cpulocal_var(proc_ptr) = rp;
+			get_cpulocal_var(proc_ptr) = process;
 
 		/* Process isn't scheduled until VM has set up a pagetable for it. */
-		if (rp->p_nr != VM_PROC_NR && rp->p_nr >= 0) {
-			rp->p_rts_flags |= RTS_VMINHIBIT;
-			rp->p_rts_flags |= RTS_BOOTINHIBIT;
+		if (process->p_nr != VM_PROC_NR && process->p_nr >= 0) {
+			process->p_rts_flags |= RTS_VMINHIBIT;
+			process->p_rts_flags |= RTS_BOOTINHIBIT;
 		}
 
-		rp->p_rts_flags |= RTS_PROC_STOP;
-		rp->p_rts_flags &= ~RTS_SLOT_FREE;
+		process->p_rts_flags |= RTS_PROC_STOP;
+		process->p_rts_flags &= ~RTS_SLOT_FREE;
 		DEBUGEXTRA(("done\n"));
 	}
 
@@ -313,7 +243,6 @@ void kmain(kinfo_t *local_cbi)
 		 * single CPU booting
 		 */
 		bsp_finish_booting();
-		// bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
 	}
 #else
 	/*
@@ -322,7 +251,6 @@ void kmain(kinfo_t *local_cbi)
 	 * never return here
 	 */
 	bsp_finish_booting();
-	// bsp_bootstrap_instance.finish_booting(&bsp_bootstrap_instance);
 #endif
 
 	NOT_REACHABLE;

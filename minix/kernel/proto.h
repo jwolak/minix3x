@@ -88,8 +88,8 @@ void flag_account(struct proc *p, int flag);
 int try_deliver_senda(struct proc *caller_ptr, asynmsg_t *table, size_t
 	size);
 
-/* start.c */
-void cstart(void);
+/* main.c */
+void kernel_early_init(void);
 char *env_get(const char *key);
 
 /* system.c */

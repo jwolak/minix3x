@@ -11,6 +11,7 @@
 #include "hw_intr.h"
 #include "arch_proto.h"
 #include "bsp_bootstrap/bsp_bootstrap.h"
+#include "shutdown/shutdown.h"
 
 #ifdef CONFIG_SMP
 #include "smp.h"
@@ -40,27 +41,31 @@ void kmain(kinfo_t *boot_info)
         panic("kmain: boot info pointer is NULL");
     }
 
-    /* save a global copy of the boot parameters */
-    memcpy(&kinfo, boot_info, sizeof(kinfo));
-    memcpy(&kmess, kinfo.kmess, sizeof(kmess));
+    /* Preserve boot parameters and the bootstrap log in kernel-owned globals.
+     * Bootstrap memory is reclaimed after initialization. */
+    memcpy(&kinfo, boot_info, sizeof(kinfo));   // kinfo - global variable defined in minix/kernel/glo.h
+    memcpy(&kmess, kinfo.kmess, sizeof(kmess)); // kmess - global variable defined in minix/kernel/glo.h
 
-    /* We have done this exercise in pre_init so we expect this code
-       to simply work! */
-    machine.board_id = get_board_id_by_name(env_get(BOARDVARNAME));
+    /* Resolve the board name from boot parameters to its numeric ID. */
+    machine.board_id = get_board_id_by_name(env_get(BOARDVARNAME)); // Resolve board name to numeric ID
 #ifdef __arm__
     /* We want to initialize serial before we do any output */
     arch_ser_init();
 #endif
-    /* We can talk now */
+
     DEBUGBASIC(("Minix3x booting...\n"));
 
     /* Kernel may use bits of main memory before VM is started */
     kernel_may_alloc = 1;
 
+    /* Keep the boot process descriptors in kinfo for VM. The global image
+     * table is updated below with process endpoints and module addresses, so
+     * kinfo.boot_procs is copied again after that initialization is complete.
+     * Ensure both arrays have the same size before copying the full table. */
     assert(sizeof(kinfo.boot_procs) == sizeof(image));
     memcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs));
 
-    cstart();
+    kernel_early_init();
 
     BKL_LOCK();
 
@@ -241,63 +246,12 @@ void kmain(kinfo_t *boot_info)
 }
 
 /*===========================================================================*
- *				prepare_shutdown			     *
+ *				kernel_early_init			     *
  *===========================================================================*/
-void prepare_shutdown(const int how)
+void kernel_early_init(void)
 {
-    /* This function prepares to shutdown MINIX. */
-    static minix_timer_t shutdown_timer;
-
-    /* Continue after 1 second, to give processes a chance to get scheduled to
-     * do shutdown work.  Set a watchog timer to call shutdown(). The timer
-     * argument passes the shutdown status.
-     */
-    printf("MINIX will now be shut down ...\n");
-    set_kernel_timer(&shutdown_timer, get_monotonic() + system_hz, minix_shutdown, how);
-}
-
-/*===========================================================================*
- *				shutdown 				     *
- *===========================================================================*/
-void minix_shutdown(int how)
-{
-    /* This function is called from prepare_shutdown or stop_sequence to bring
-     * down MINIX.
-     */
-
-#ifdef CONFIG_SMP
-    /*
-     * FIXME
-     *
-     * we will need to stop timers on all cpus if SMP is enabled and put them in
-     * such a state that we can perform the whole boot process once restarted from
-     * monitor again
-     */
-    if (ncpus > 1)
-        smp_shutdown_aps();
-#endif
-    hw_intr_disable_all();
-    stop_local_timer();
-
-    /* Show shutdown message */
-    direct_cls();
-    if ((how & RB_POWERDOWN) == RB_POWERDOWN)
-        direct_print("MINIX has halted and will now power off.\n");
-    else if (how & RB_HALT)
-        direct_print("MINIX has halted. "
-                     "It is safe to turn off your computer.\n");
-    else
-        direct_print("MINIX will now reset.\n");
-    arch_shutdown(how);
-}
-
-/*===========================================================================*
- *				cstart					     *
- *===========================================================================*/
-void cstart(void)
-{
-    /* Perform system initializations prior to calling main(). Most settings are
-     * determined with help of the environment strings passed by MINIX' loader.
+    /* Perform early system initialization before setting up kernel processes.
+     * Most settings are determined from parameters passed by MINIX' loader.
      */
     register char *value; /* value in key=value pair */
 
@@ -318,7 +272,7 @@ void cstart(void)
         kinfo.user_end = (vir_bytes)USR_DATATOP_COMPACT;
     }
 
-    DEBUGEXTRA(("cstart\n"));
+    DEBUGEXTRA(("kernel_early_init\n"));
 
     /* Record miscellaneous information for user-space servers. */
     kinfo.nr_procs = NR_PROCS;

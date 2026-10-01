@@ -1,5 +1,6 @@
 # MINIX 3.x release notes
 # Format: YYYY-MM-DD HH:MM:SS +ZZZZ | vMAJOR.MINOR.PATCH | commit message
+2026-10-01 20:10:14 +0200 | v0.0.4 | Refactor boot parameter handling in kmain for clarity and memory management
 2026-10-01 19:28:51 +0200 | v0.0.3 | Implement post-commit hook for automatic release metadata updates and amend commits
 2026-10-01 19:23:03 +0200 | v0.0.2 | Update version to 0.0.1 and enhance commit-msg hook for automatic release notes updates
 2026-10-01 19:18:23 +0200 | v0.0.1 | Add Git hooks for automatic versioning and release notes updates

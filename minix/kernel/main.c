@@ -40,18 +40,18 @@ void kmain(kinfo_t *boot_info)
         panic("kmain: boot info pointer is NULL");
     }
 
-    /* save a global copy of the boot parameters */
-    memcpy(&kinfo, boot_info, sizeof(kinfo));
-    memcpy(&kmess, kinfo.kmess, sizeof(kmess));
+    /* Preserve boot parameters and the bootstrap log in kernel-owned globals.
+     * Bootstrap memory is reclaimed after initialization. */
+    memcpy(&kinfo, boot_info, sizeof(kinfo));   // kinfo - global variable defined in minix/kernel/glo.h
+    memcpy(&kmess, kinfo.kmess, sizeof(kmess)); // kmess - global variable defined in minix/kernel/glo.h
 
-    /* We have done this exercise in pre_init so we expect this code
-       to simply work! */
-    machine.board_id = get_board_id_by_name(env_get(BOARDVARNAME));
+    /* Resolve the board name from boot parameters to its numeric ID. */
+    machine.board_id = get_board_id_by_name(get_value(kinfo.param_buf, BOARDVARNAME)); // Resolve board name to numeric ID
 #ifdef __arm__
     /* We want to initialize serial before we do any output */
     arch_ser_init();
 #endif
-    /* We can talk now */
+
     DEBUGBASIC(("Minix3x booting...\n"));
 
     /* Kernel may use bits of main memory before VM is started */

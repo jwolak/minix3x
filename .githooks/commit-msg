@@ -5,4 +5,3 @@ repo_root=$(git rev-parse --show-toplevel)
 cd "$repo_root"
 
 python3 scripts/update_release_metadata.py "$1"
-git add -- package.json RELEASE_NOTES.txt

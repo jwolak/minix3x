@@ -1,0 +1,2 @@
+# MINIX 3.x release notes
+# Format: YYYY-MM-DD HH:MM:SS +ZZZZ | vMAJOR.MINOR.PATCH | commit message

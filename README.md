@@ -80,6 +80,13 @@ Notes:
 
 ## Contributing / style guide
 
+Install the Git hook once to update `package.json` and add the commit subject to
+`RELEASE_NOTES.txt` automatically on each commit. Python 3 is required:
+
+```bash
+sh ./scripts/install_hooks.sh
+```
+
 This repository keeps a lightweight C formatting setup for local development.
 The project uses a repository-level [.clang-format](.clang-format) file and a
 small helper script at [tools/format-file.sh](tools/format-file.sh).

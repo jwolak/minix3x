@@ -1,0 +1,9 @@
+{
+    "name": "minix3x",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Experimental continuation and customization of MINIX.",
+    "scripts": {
+        "hooks:install": "sh ./scripts/install_hooks.sh"
+    }
+}

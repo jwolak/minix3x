@@ -46,7 +46,7 @@ void kmain(kinfo_t *boot_info)
     memcpy(&kmess, kinfo.kmess, sizeof(kmess)); // kmess - global variable defined in minix/kernel/glo.h
 
     /* Resolve the board name from boot parameters to its numeric ID. */
-    machine.board_id = get_board_id_by_name(get_value(kinfo.param_buf, BOARDVARNAME)); // Resolve board name to numeric ID
+    machine.board_id = get_board_id_by_name(env_get(BOARDVARNAME)); // Resolve board name to numeric ID
 #ifdef __arm__
     /* We want to initialize serial before we do any output */
     arch_ser_init();
@@ -57,10 +57,14 @@ void kmain(kinfo_t *boot_info)
     /* Kernel may use bits of main memory before VM is started */
     kernel_may_alloc = 1;
 
+    /* Keep the boot process descriptors in kinfo for VM. The global image
+     * table is updated below with process endpoints and module addresses, so
+     * kinfo.boot_procs is copied again after that initialization is complete.
+     * Ensure both arrays have the same size before copying the full table. */
     assert(sizeof(kinfo.boot_procs) == sizeof(image));
     memcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs));
 
-    cstart();
+    kernel_early_init();
 
     BKL_LOCK();
 
@@ -292,12 +296,12 @@ void minix_shutdown(int how)
 }
 
 /*===========================================================================*
- *				cstart					     *
+ *				kernel_early_init			     *
  *===========================================================================*/
-void cstart(void)
+void kernel_early_init(void)
 {
-    /* Perform system initializations prior to calling main(). Most settings are
-     * determined with help of the environment strings passed by MINIX' loader.
+    /* Perform early system initialization before setting up kernel processes.
+     * Most settings are determined from parameters passed by MINIX' loader.
      */
     register char *value; /* value in key=value pair */
 
@@ -318,7 +322,7 @@ void cstart(void)
         kinfo.user_end = (vir_bytes)USR_DATATOP_COMPACT;
     }
 
-    DEBUGEXTRA(("cstart\n"));
+    DEBUGEXTRA(("kernel_early_init\n"));
 
     /* Record miscellaneous information for user-space servers. */
     kinfo.nr_procs = NR_PROCS;

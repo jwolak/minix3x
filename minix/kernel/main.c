@@ -1,13 +1,3 @@
-/* This file contains the main program of MINIX as well as its shutdown code.
- * The routine main() initializes the system and starts the ball rolling by
- * setting up the process table, interrupt vectors, and scheduling each task
- * to run to initialize itself.
- * The routine shutdown() does the opposite and brings down MINIX.
- *
- * The entries into this file are:
- *   main:	    	MINIX main program
- *   prepare_shutdown:	prepare to take MINIX down
- */
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -62,7 +52,7 @@ void kmain(kinfo_t *boot_info)
     arch_ser_init();
 #endif
     /* We can talk now */
-    DEBUGBASIC(("MINIX booting\n"));
+    DEBUGBASIC(("Minix3x booting...\n"));
 
     /* Kernel may use bits of main memory before VM is started */
     kernel_may_alloc = 1;

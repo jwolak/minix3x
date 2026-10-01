@@ -1,7 +1,0 @@
-#!/bin/sh
-set -eu
-
-repo_root=$(git rev-parse --show-toplevel)
-cd "$repo_root"
-
-python3 scripts/update_release_metadata.py "$1"

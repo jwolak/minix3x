@@ -81,7 +81,8 @@ Notes:
 ## Contributing / style guide
 
 Install the Git hook once to update `package.json` and add the commit subject to
-`RELEASE_NOTES.txt` automatically on each commit. Python 3 is required:
+`RELEASE_NOTES.txt` automatically on each commit. The hook amends the local
+commit to include these changes, so its hash changes. Python 3 is required:
 
 ```bash
 sh ./scripts/install_hooks.sh

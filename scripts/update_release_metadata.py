@@ -8,7 +8,8 @@ from pathlib import Path
 repo_root = Path(__file__).resolve().parent.parent
 package_path = repo_root / "package.json"
 release_notes_path = repo_root / "RELEASE_NOTES.txt"
-commit_message_path = Path(sys.argv[1])
+if len(sys.argv) != 2:
+    raise SystemExit("Usage: update_release_metadata.py COMMIT_SUBJECT")
 
 package = json.loads(package_path.read_text(encoding="utf-8"))
 if not isinstance(package, dict):
@@ -20,21 +21,13 @@ if len(parts) != 3 or not all(part.isdigit() for part in parts):
     raise SystemExit(f"Invalid semantic version: {version}")
 
 try:
-    message_lines = commit_message_path.read_text(encoding="utf-8").splitlines()
     release_notes = release_notes_path.read_text(encoding="utf-8").splitlines()
 except OSError as error:
-    raise SystemExit(f"Cannot read commit metadata: {error}") from error
+    raise SystemExit(f"Cannot read release notes: {error}") from error
 
-subject = next(
-    (
-        line.strip()
-        for line in message_lines
-        if line.strip() and not line.lstrip().startswith("#")
-    ),
-    "",
-)
+subject = sys.argv[1].strip()
 if not subject:
-    raise SystemExit("Cannot find a commit subject in the commit message")
+    raise SystemExit("Cannot find a commit subject")
 subject = subject.replace("|", "-")
 
 major, minor, patch = parts

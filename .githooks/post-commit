@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+if [ "${MINIX3X_RELEASE_METADATA_AMENDING:-0}" = 1 ]; then
+	exit 0
+fi
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+subject=$(git log -1 --format=%s)
+python3 scripts/update_release_metadata.py "$subject"
+git add -- package.json RELEASE_NOTES.txt
+
+if ! MINIX3X_RELEASE_METADATA_AMENDING=1 git commit --amend --only --no-edit --no-verify -- package.json RELEASE_NOTES.txt; then
+	git reset --quiet HEAD -- package.json RELEASE_NOTES.txt
+	printf '%s\n' 'Could not amend commit with release metadata; updates remain unstaged.' >&2
+	exit 1
+fi

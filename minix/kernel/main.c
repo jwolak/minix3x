@@ -11,6 +11,7 @@
 #include "hw_intr.h"
 #include "arch_proto.h"
 #include "bsp_bootstrap/bsp_bootstrap.h"
+#include "shutdown/shutdown.h"
 
 #ifdef CONFIG_SMP
 #include "smp.h"
@@ -242,57 +243,6 @@ void kmain(kinfo_t *boot_info)
 #endif
 
     NOT_REACHABLE;
-}
-
-/*===========================================================================*
- *				prepare_shutdown			     *
- *===========================================================================*/
-void prepare_shutdown(const int how)
-{
-    /* This function prepares to shutdown MINIX. */
-    static minix_timer_t shutdown_timer;
-
-    /* Continue after 1 second, to give processes a chance to get scheduled to
-     * do shutdown work.  Set a watchog timer to call shutdown(). The timer
-     * argument passes the shutdown status.
-     */
-    printf("MINIX will now be shut down ...\n");
-    set_kernel_timer(&shutdown_timer, get_monotonic() + system_hz, minix_shutdown, how);
-}
-
-/*===========================================================================*
- *				shutdown 				     *
- *===========================================================================*/
-void minix_shutdown(int how)
-{
-    /* This function is called from prepare_shutdown or stop_sequence to bring
-     * down MINIX.
-     */
-
-#ifdef CONFIG_SMP
-    /*
-     * FIXME
-     *
-     * we will need to stop timers on all cpus if SMP is enabled and put them in
-     * such a state that we can perform the whole boot process once restarted from
-     * monitor again
-     */
-    if (ncpus > 1)
-        smp_shutdown_aps();
-#endif
-    hw_intr_disable_all();
-    stop_local_timer();
-
-    /* Show shutdown message */
-    direct_cls();
-    if ((how & RB_POWERDOWN) == RB_POWERDOWN)
-        direct_print("MINIX has halted and will now power off.\n");
-    else if (how & RB_HALT)
-        direct_print("MINIX has halted. "
-                     "It is safe to turn off your computer.\n");
-    else
-        direct_print("MINIX will now reset.\n");
-    arch_shutdown(how);
 }
 
 /*===========================================================================*

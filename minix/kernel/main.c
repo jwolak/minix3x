@@ -14,6 +14,7 @@
 #include "shutdown/shutdown.h"
 #include "early_init/early_init.h"
 #include "boot_params/boot_params.h"
+#include "cpu_info/cpu_info.h"
 
 #ifdef CONFIG_SMP
 #include "smp.h"
@@ -246,13 +247,3 @@ void kmain(kinfo_t *boot_info)
 
     NOT_REACHABLE;
 }
-
-void cpu_print_freq(unsigned cpu)
-{
-    u64_t freq;
-
-    freq = cpu_get_freq(cpu);
-    DEBUGBASIC(("CPU %d freq %lu MHz\n", cpu, (unsigned long)(freq / 1000000)));
-}
-
-int is_fpu(void) { return get_cpulocal_var(fpu_presence); }

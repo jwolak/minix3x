@@ -1,5 +1,8 @@
 # MINIX 3.x release notes
 # Format: YYYY-MM-DD HH:MM:SS +ZZZZ | vMAJOR.MINOR.PATCH | commit message
+2026-10-05 20:09:12 +0200 | v0.0.10 | Add CPU information handling with cpu_info implementation
+2026-10-05 20:02:12 +0200 | v0.0.9 | Add boot parameter handling with boot_params implementation
+2026-10-05 19:51:41 +0200 | v0.0.8 | Add early initialization functionality with kernel_early_init implementation
 2026-10-01 20:51:31 +0200 | v0.0.7 | Add format-all script for automatic code formatting with clang-format
 2026-10-01 20:46:58 +0200 | v0.0.6 | Add shutdown functionality with prepare_shutdown and minix_shutdown implementations
 2026-10-01 20:29:44 +0200 | v0.0.5 | Rename cstart to kernel_early_init for clarity and update references in glo.h, main.c, and proto.h

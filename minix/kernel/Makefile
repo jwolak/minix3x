@@ -16,9 +16,10 @@ DBG=-O0
 .PATH: ${.CURDIR}/bsp_bootstrap
 .PATH: ${.CURDIR}/shutdown
 .PATH: ${.CURDIR}/early_init
+.PATH: ${.CURDIR}/boot_params
 
 SRCS+= system_announce.c clock.c cpulocals.c interrupt.c main.c proc.c system.c \
-	table.c utility.c usermapped_data.c bsp_bootstrap.c shutdown.c early_init.c
+	table.c utility.c usermapped_data.c bsp_bootstrap.c shutdown.c early_init.c boot_params.c
 
 LDADD+=	-ltimers -lsys -lexec 
 

@@ -13,6 +13,7 @@
 #include "bsp_bootstrap/bsp_bootstrap.h"
 #include "shutdown/shutdown.h"
 #include "early_init/early_init.h"
+#include "boot_params/boot_params.h"
 
 #ifdef CONFIG_SMP
 #include "smp.h"
@@ -245,36 +246,6 @@ void kmain(kinfo_t *boot_info)
 
     NOT_REACHABLE;
 }
-
-/*===========================================================================*
- *				get_value				     *
- *===========================================================================*/
-
-char *get_value(const char *params, /* boot monitor parameters */
-                const char *name    /* key to look up */
-)
-{
-    /* Get environment value - kernel version of getenv to avoid setting up the
-     * usual environment array.
-     */
-    register const char *namep;
-    register char *envp;
-
-    for (envp = (char *)params; *envp != 0;) {
-        for (namep = name; *namep != 0 && *namep == *envp; namep++, envp++)
-            ;
-        if (*namep == '\0' && *envp == '=')
-            return (envp + 1);
-        while (*envp++ != 0)
-            ;
-    }
-    return (NULL);
-}
-
-/*===========================================================================*
- *				env_get				     	*
- *===========================================================================*/
-char *env_get(const char *name) { return get_value(kinfo.param_buf, name); }
 
 void cpu_print_freq(unsigned cpu)
 {

@@ -12,6 +12,7 @@
 #include "arch_proto.h"
 #include "bsp_bootstrap/bsp_bootstrap.h"
 #include "shutdown/shutdown.h"
+#include "early_init/early_init.h"
 
 #ifdef CONFIG_SMP
 #include "smp.h"
@@ -243,83 +244,6 @@ void kmain(kinfo_t *boot_info)
 #endif
 
     NOT_REACHABLE;
-}
-
-/*===========================================================================*
- *				kernel_early_init			     *
- *===========================================================================*/
-void kernel_early_init(void)
-{
-    /* Perform early system initialization before setting up kernel processes.
-     * Most settings are determined from parameters passed by MINIX' loader.
-     */
-    register char *value; /* value in key=value pair */
-
-    /* low-level initialization */
-    prot_init();
-
-    /* determine verbosity */
-    if ((value = env_get(VERBOSEBOOTVARNAME)))
-        verboseboot = atoi(value);
-
-    /* Initialize clock variables. */
-    init_clock();
-
-    /* Get memory parameters. */
-    value = env_get("ac_layout");
-    if (value && atoi(value)) {
-        kinfo.user_sp = (vir_bytes)USR_STACKTOP_COMPACT;
-        kinfo.user_end = (vir_bytes)USR_DATATOP_COMPACT;
-    }
-
-    DEBUGEXTRA(("kernel_early_init\n"));
-
-    /* Record miscellaneous information for user-space servers. */
-    kinfo.nr_procs = NR_PROCS;
-    kinfo.nr_tasks = NR_TASKS;
-    strlcpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release));
-    strlcpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
-
-    /* Initialize various user-mapped structures. */
-    memset(&arm_frclock, 0, sizeof(arm_frclock));
-
-    memset(&kuserinfo, 0, sizeof(kuserinfo));
-    kuserinfo.kui_size = sizeof(kuserinfo);
-    kuserinfo.kui_user_sp = kinfo.user_sp;
-
-#ifdef USE_APIC
-    value = env_get("no_apic");
-    if (value)
-        config_no_apic = atoi(value);
-    else
-        config_no_apic = 1;
-    value = env_get("apic_timer_x");
-    if (value)
-        config_apic_timer_x = atoi(value);
-    else
-        config_apic_timer_x = 1;
-#endif
-
-#ifdef USE_WATCHDOG
-    value = env_get("watchdog");
-    if (value)
-        watchdog_enabled = atoi(value);
-#endif
-
-#ifdef CONFIG_SMP
-    if (config_no_apic)
-        config_no_smp = 1;
-    value = env_get("no_smp");
-    if (value)
-        config_no_smp = atoi(value);
-    else
-        config_no_smp = 0;
-#endif
-    DEBUGEXTRA(("intr_init(0)\n"));
-
-    intr_init(0);
-
-    arch_init();
 }
 
 /*===========================================================================*

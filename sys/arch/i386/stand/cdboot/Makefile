@@ -3,6 +3,7 @@
 S=		${.CURDIR}/../../../..
 
 AFLAGS.cdboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.cdboot.S+=	-Wa,--divide
 .if defined(__MINIX)
 USE_BITCODE=no
 .endif # defined(__MINIX)

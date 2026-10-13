@@ -22,7 +22,7 @@ realall:	${INFOFILES}
 
 .txi.info .texi.info .texinfo.info:
 	${_MKTARGET_CREATE}
-	${TOOL_MAKEINFO} ${INFOFLAGS} --no-split --no-version-header -o ${.TARGET} ${.IMPSRC}
+	${TOOL_MAKEINFO} ${INFOFLAGS} --no-split -o ${.TARGET} ${.IMPSRC}
 
 .endif # ${MKINFO} != "no"
 

@@ -111,6 +111,50 @@ The kernel call numbers and their request and response parameters are defined in
 
 ### Overview of kernel calls in Minix3x
 
+| Kernel Call | Purpose |
+|-------------|---------|
+| *SYSTEM CONTROL* | |
+| [SYS_ABORT](#sys_abort) | Abort Minix3x; the system is unable to continue |
+
 ### Minix3x kernel call interface
 
 #### SYS_ABORT
+
+Shutdown Minix3x and return to the boot monitor, if possible. This is used by PM, FS and TTY. Normal aborts usually are initiated by the user, for example by means of the shutdown command or typing Ctrl-Alt-Del. Minix3x will also be taken down if a fatal error occurs in the PM or FS.
+
+The callers mentioned above are:
+
+| Abbreviation | Name | Description |
+|--------------|------|-------------|
+| **PM** | Process Manager | Server that manages processes: creating and terminating them (`fork`, `exec`, `exit`, `wait`), signals, and process groups. Source: [`minix/servers/pm`](../../minix/servers/pm). |
+| **FS** | File System | Server that handles file system requests from user programs, such as opening, reading, writing, and mounting. In current Minix3x sources it is implemented by the Virtual File System (VFS) server, which forwards requests to the actual file system servers. Source: [`minix/servers/vfs`](../../minix/servers/vfs). |
+| **TTY** | Terminal driver | Driver that handles the console, keyboard, and terminal devices. It reports the Ctrl-Alt-Del key combination, which can start a system shutdown. Source: [`minix/drivers/tty/tty`](../../minix/drivers/tty/tty). |
+
+##### Request parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `ABRT_HOW` | How to abort. One of the values defined in `src/include/unistd.h`: |
+| &nbsp;&nbsp;`RBT_HALT` | Halt Minix3x and return to the boot monitor. |
+| &nbsp;&nbsp;`RBT_REBOOT` | Reboot Minix3x. |
+| &nbsp;&nbsp;`RBT_PANIC` | A kernel panic occurred. |
+| &nbsp;&nbsp;`RBT_MONITOR` | Run the specified code at the boot monitor. |
+| &nbsp;&nbsp;`RBT_RESET` | Hard reset the system. |
+| `ABRT_MON_ENDPT` | Process to get the boot monitor parameters from. |
+| `ABRT_MON_LEN` | Length of the boot monitor parameters. |
+| `ABRT_MON_ADDR` | Virtual address of the parameters. |
+
+##### Return values
+
+| Value | Meaning |
+|-------|---------|
+| `OK` | The shutdown sequence was started. |
+| `EINVAL` | Invalid process number. |
+| `EFAULT` | Illegal monitor parameters address. |
+| `E2BIG` | Monitor parameters exceed maximum length. |
+
+##### Library functions
+
+```c
+int sys_abort(int shutdown_status, ...);
+```

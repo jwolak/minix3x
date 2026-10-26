@@ -48,6 +48,8 @@ LOADADDR=	0x8800
 
 AFLAGS.mbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.gpt.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.mbr.S+=	-Wa,--divide
+AFLAGS.gpt.S+=	-Wa,--divide
 
 .if defined(__MINIX)
 CPPFLAGS+= -DLOADADDR=${LOADADDR}

@@ -3,6 +3,7 @@
 S=	${.CURDIR}/../../../../..
 
 AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.bootxx.S+=	-Wa,--divide
 AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 

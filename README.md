@@ -21,11 +21,38 @@ Experimental continuation and customization of MINIX.
 
 ## Building the system
 
-Build the whole system (toolchain + release) using the `build.sh` script, e.g. for i386:
+The steps below are for Debian/Ubuntu and build an i386 toolchain and release.
+Start by installing the host build tools and development libraries:
 
 ```bash
-./build.sh -j $(nproc) -m i386 -O ../obj.i386 -D ../obj.i386/destdir.i386 -U -u release
+sudo apt update
+sudo apt install build-essential bison flex gawk git curl ca-certificates \
+  patch tar bzip2 gzip perl python3 libncurses-dev zlib1g-dev
 ```
+
+Clone this repository and enter its root directory if you have not already done
+so. The build fetches two additional, version-pinned source archives; fetch them
+before building:
+
+```bash
+sh gnu/dist/fetch.sh
+sh external/gpl3/binutils/fetch.sh
+```
+
+These scripts need network access. The Binutils fetch script also applies the
+MINIX patches tracked in this repository.
+
+Build the whole system (toolchain + release) for i386:
+
+```bash
+HOST_CFLAGS='-O -fcommon' ./build.sh -j "$(nproc)" -m i386 \
+  -O ../obj.i386 -D ../obj.i386/destdir.i386 -U -u release
+```
+
+`-fcommon` is needed when building the bundled legacy Texinfo with modern GCC.
+The object and destination directories are placed alongside (not inside) the
+source tree. A successful build creates release sets under
+`../obj.i386/releasedir/i386/binary/sets/`.
 
 ## Creating a disk image
 

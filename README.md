@@ -3,6 +3,22 @@ Experimental continuation and customization of MINIX.
 
 ![MINIX running in QEMU](img/minix3.x_screen.png)
 
+## Contents
+
+- [Documentation](#documentation)
+- [Building the system](#building-the-system)
+- [Creating a disk image](#creating-a-disk-image)
+- [Creating a bootable CD image](#creating-a-bootable-cd-image)
+- [Running the CD image in QEMU](#running-the-cd-image-in-qemu)
+- [Running the CD image in Hyper-V](#running-the-cd-image-in-hyper-v)
+- [Running the image in QEMU](#running-the-image-in-qemu)
+- [Contributing / style guide](#contributing--style-guide)
+- [VS Code auto-format on save](#vs-code-auto-format-on-save)
+
+## Documentation
+
+- [MINIX 3 Developers Guide](docs/developers-guide/README.md)
+
 ## Building the system
 
 Build the whole system (toolchain + release) using the `build.sh` script, e.g. for i386:

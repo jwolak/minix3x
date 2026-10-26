@@ -1,5 +1,6 @@
 # MINIX 3.x release notes
 # Format: YYYY-MM-DD HH:MM:SS +ZZZZ | vMAJOR.MINOR.PATCH | commit message
+2026-10-26 18:03:06 +0100 | v0.0.13 | Remove redundant newline in the MINIX3x Developers Guide README
 2026-10-26 18:01:04 +0100 | v0.0.12 | Refactor README and developers guide for clarity; remove outdated UPDATING and profiling documentation
 2026-10-26 17:53:39 +0100 | v0.0.11 | Add documentation for MINIX3x Developers Guide
 2026-10-05 20:09:12 +0200 | v0.0.10 | Add CPU information handling with cpu_info implementation

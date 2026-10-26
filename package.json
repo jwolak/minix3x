@@ -1,6 +1,6 @@
 {
     "name": "minix3x",
-    "version": "0.0.14",
+    "version": "0.0.15",
     "private": true,
     "description": "Experimental continuation and customization of MINIX.",
     "scripts": {

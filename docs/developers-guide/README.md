@@ -14,7 +14,12 @@ repository-specific instructions in the main [README](../../README.md).
   - [User-mode server processes](#user-mode-server-processes)
   - [Drivers](#drivers)
   - [Servers](#servers)
-- [User-land](#user-land)
+  - [User-land](#user-land)
+- [Minix3x Kernel API](#minix3x-kernel-api)
+  - [Organization of Kernel Calls](#organization-of-kernel-calls)
+  - [Overview of kernel calls in Minix3x](#overview-of-kernel-calls-in-minix3x)
+  - [Minix3x kernel call interface](#minix3x-kernel-call-interface)
+    - [SYS_ABORT](#sys_abort)
 
 ## Overview of Minix3x architecture
 
@@ -89,3 +94,23 @@ The user-land is the collection of processes, libraries, files and components th
 Since Minix 3.2.0, most of the user-land is imported from NetBSD, with Minix-specific utilities mostly for administrating the servers and drivers. In a sense, Minix is now a reimplementation of the NetBSD user-land on top of a micro-kernel and now looks familiar to BSD users and developers.
 
 Minix3x is provided with a base system mostly identical to the NetBSD one. Extra software and utilities is usually installed via pkgin, which is a binary package manager for pkgsrc, the huge collection of programs and libraries ports available on NetBSD and other operating systems.
+
+## Minix3x Kernel API
+
+In general, kernel calls allows system processes to request kernel services, for example to perform privileged operations. This document briefly discusses the organization of kernel calls in Minix3x and provides an overview of all kernel calls.
+
+### Organization of Kernel Calls
+
+A kernel call means that a request is sent to a kernel where it is handled by one of the kernel tasks. The details of assembling a request message, sending it to the kernel and awaiting the response are conveniently hidden in a system library. The header file of this library is ```src/include/minix/syslib.h``` and its implementation is found in ```src/lib/syslib```.
+
+The actual implementation of the kernel calls is defined in the ```SYSTEM``` kernel task. Suppose that a program makes a ```sys_call()``` system call. By convention, this call is transformed into a request message with type ```SYS_CALL``` that is sent to the kernel task SYSTEM. The ```SYSTEM``` task handles the request in a function named ```do_call()``` and returns the result.
+
+The mapping of kernel call numbers and handler functions is done during the ```SYSTEM``` task's initialization response ```src/kernel/system.c```. The prototypes of the handler functions are declared in ```src/kernel/system.h```. Their implementation is contained in separate files in the directory ```src/kernel/system/```. These files are compiled into the library ```/src/kernel/system/system.a``` that is linked to the kernel.
+
+The kernel call numbers and their request and response parameters are defined in ```src/include/minix/com.h```. Kernel calls all start with ```SYS_``` and all parameters that belong to the same kernel call share a common prefix.
+
+### Overview of kernel calls in Minix3x
+
+### Minix3x kernel call interface
+
+#### SYS_ABORT

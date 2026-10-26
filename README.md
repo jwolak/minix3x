@@ -1,4 +1,4 @@
-# minix3x - Experimental continuation and customization of MINIX 3
+# Minix3x - Experimental continuation and customization of MINIX 3
 
 ![MINIX running in QEMU](img/minix3.x_screen.png)
 
@@ -110,6 +110,7 @@ qemu-system-i386 -m 256 -drive file=minix_x86.img,format=raw,if=ide -display cur
 ```
 
 Notes:
+
 - `-display curses` renders the emulated screen as text in the current
   terminal and is useful in environments without X11/GTK (e.g. an SSH session
   or a VM without a GUI). If a graphical environment is available, you can

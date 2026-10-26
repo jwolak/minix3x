@@ -1,5 +1,4 @@
-# minix3x
-Experimental continuation and customization of MINIX.
+# minix3x - Experimental continuation and customization of MINIX 3
 
 ![MINIX running in QEMU](img/minix3.x_screen.png)
 

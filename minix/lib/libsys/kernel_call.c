@@ -6,17 +6,18 @@
 
 int _kernel_call(int syscallnr, message *msgptr)
 {
-  int t, r;
-  t = 1;
-  while(1) {
-      msgptr->m_type = syscallnr;
-      do_kernel_call(msgptr);
-      r = msgptr->m_type;
-      if(r != ENOTREADY) {
-          break;
-      }
-      tickdelay(t++);
-  }
-  return r;
-}
+    int ticks = 1;
+    int call_result = -1;
 
+    while (1) {
+        msgptr->m_type = syscallnr;
+        do_kernel_call(msgptr);
+        call_result = msgptr->m_type;
+        if (call_result != ENOTREADY) {
+            break;
+        }
+        tickdelay(ticks++);
+    }
+
+    return call_result;
+}

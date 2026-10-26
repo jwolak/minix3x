@@ -125,7 +125,7 @@ Shutdown Minix3x and return to the boot monitor, if possible. This is used by PM
 The callers mentioned above are:
 
 | Abbreviation | Name | Description |
-|--------------|------|-------------|
+| -------------- | ------ | ------------- |
 | **PM** | Process Manager | Server that manages processes: creating and terminating them (`fork`, `exec`, `exit`, `wait`), signals, and process groups. Source: [`minix/servers/pm`](../../minix/servers/pm). |
 | **FS** | File System | Server that handles file system requests from user programs, such as opening, reading, writing, and mounting. In current Minix3x sources it is implemented by the Virtual File System (VFS) server, which forwards requests to the actual file system servers. Source: [`minix/servers/vfs`](../../minix/servers/vfs). |
 | **TTY** | Terminal driver | Driver that handles the console, keyboard, and terminal devices. It reports the Ctrl-Alt-Del key combination, which can start a system shutdown. Source: [`minix/drivers/tty/tty`](../../minix/drivers/tty/tty). |
@@ -133,28 +133,29 @@ The callers mentioned above are:
 ##### Request parameters
 
 | Parameter | Description |
-|-----------|-------------|
-| `ABRT_HOW` | How to abort. One of the values defined in `src/include/unistd.h`: |
-| &nbsp;&nbsp;`RBT_HALT` | Halt Minix3x and return to the boot monitor. |
-| &nbsp;&nbsp;`RBT_REBOOT` | Reboot Minix3x. |
-| &nbsp;&nbsp;`RBT_PANIC` | A kernel panic occurred. |
-| &nbsp;&nbsp;`RBT_MONITOR` | Run the specified code at the boot monitor. |
-| &nbsp;&nbsp;`RBT_RESET` | Hard reset the system. |
-| `ABRT_MON_ENDPT` | Process to get the boot monitor parameters from. |
-| `ABRT_MON_LEN` | Length of the boot monitor parameters. |
-| `ABRT_MON_ADDR` | Virtual address of the parameters. |
+| --------- | ----------- |
+| `how` | How to shut down the system. A combination of `RB_*` flags defined in [`sys/sys/reboot.h`](../../sys/sys/reboot.h). It is passed in the `m_lsys_krn_sys_abort.how` field of the request message to `prepare_shutdown()` in the kernel. |
+
+Values of `how` that affect the shutdown behavior:
+
+| Value | Behavior |
+| ----- | -------- |
+| `RB_AUTOBOOT` (0) | Reset the system (reboot). This is the default when no other flag is set. |
+| `RB_HALT` | Halt the system without rebooting; it is safe to turn off the computer. |
+| `RB_POWERDOWN` | Halt and turn the power off, if supported (`RB_HALT` with an additional flag). |
+
+The kernel does not shut down immediately. `prepare_shutdown()` sets a timer for one second, so that other processes can finish their shutdown work. When it fires, `minix_shutdown()` disables hardware interrupts and the local timer, prints the shutdown message, and calls the architecture-specific `arch_shutdown()`.
 
 ##### Return values
 
 | Value | Meaning |
-|-------|---------|
-| `OK` | The shutdown sequence was started. |
-| `EINVAL` | Invalid process number. |
-| `EFAULT` | Illegal monitor parameters address. |
-| `E2BIG` | Monitor parameters exceed maximum length. |
+| ----- | ------- |
+| `OK` | The shutdown sequence was started. The call is not expected to return to a running system. |
 
 ##### Library functions
 
 ```c
-int sys_abort(int shutdown_status, ...);
+int sys_abort(int how);
 ```
+
+Defined in [`minix/lib/libsys/sys_abort.c`](../../minix/lib/libsys/sys_abort.c). The kernel handler is `do_abort()` in [`minix/kernel/system/do_abort.c`](../../minix/kernel/system/do_abort.c).

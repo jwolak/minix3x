@@ -1,5 +1,5 @@
 .include <bsd.own.mk>
 
-SUBDIR+=	hello
+SUBDIR+=	abortdemo hello
 
 .include <bsd.subdir.mk>

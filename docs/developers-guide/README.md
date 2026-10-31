@@ -159,3 +159,93 @@ int sys_abort(int how);
 ```
 
 Defined in [`minix/lib/libsys/sys_abort.c`](../../minix/lib/libsys/sys_abort.c). The kernel handler is `do_abort()` in [`minix/kernel/system/do_abort.c`](../../minix/kernel/system/do_abort.c).
+
+##### Example
+
+A regular user program cannot call `sys_abort()`: the kernel checks the caller's privileges, and only system services whose configuration lists `ABORT` in their `system` section are allowed to use it. User programs shut the system down with `reboot(2)` or `shutdown(8)`, which go through PM.
+
+The example service [`abortdemo`](../../minix/drivers/examples/abortdemo/abortdemo.c) shows the call in practice. Its [configuration](../../minix/drivers/examples/abortdemo/abortdemo.conf) grants the `ABORT` kernel call. **Starting it shuts the whole system down.** Run it as root, preferably in an emulator:
+
+```bash
+minix-service up /service/abortdemo -config /etc/system.conf.d/abortdemo -args "halt"
+```
+
+The argument selects the `how` value: `halt` (`RB_HALT`, the default), `poweroff` (`RB_POWERDOWN`) or `reboot` (`RB_AUTOBOOT`). About one second after the call, the kernel prints the shutdown message and stops the system as described above.
+
+###### Building the example without building the whole system
+
+After one full build of the system (see the main [README](../../README.md#building-the-system)), the toolchain and the installed libraries already exist in the object directory, so the example can be built on its own. The paths below assume the object directory `../obj.i386` used in the build command:
+
+```bash
+cd minix/drivers/examples/abortdemo
+TOOLDIR=$(ls -d ../../../../../obj.i386/tooldir*)
+$TOOLDIR/bin/nbmake-i386 obj    # only needed the first time
+$TOOLDIR/bin/nbmake-i386
+```
+
+The resulting static i386 executable is `../obj.i386/minix/drivers/examples/abortdemo/abortdemo`. To get it into the system, copy `abortdemo` to `/service/` and `abortdemo.conf` to `/etc/system.conf.d/abortdemo` on a running Minix3x, or run `$TOOLDIR/bin/nbmake-i386 install` to install both into the destination directory (`destdir`) and then create a new disk image as described in the main README.
+
+If you change a library such as `libsys`, rebuild and install it first in the same way (`nbmake-i386` and `nbmake-i386 install` in `minix/lib/libsys`); otherwise the example is linked against the previously installed version.
+
+```cpp
+#include <minix/drivers.h>
+#include <sys/reboot.h>
+#include <stdio.h>
+#include <string.h>
+
+static int abort_how = RB_HALT;
+
+static int sef_cb_init(int type, sef_init_info_t *UNUSED(info))
+{
+    int sys_abort_result = -1;
+
+    /* Only act on a fresh start, not after a restart by RS. */
+    if (type != SEF_INIT_FRESH)
+        return OK;
+
+    printf("abortdemo: calling sys_abort(0x%x)\n", abort_how);
+
+    /*
+     * The kernel does not stop at once: it prints a message and shuts down
+     * after about one second, so that other processes can finish their work.
+     */
+    sys_abort_result = sys_abort(abort_how);
+    if (sys_abort_result != OK)
+        printf("abortdemo: sys_abort failed: %d\n", sys_abort_result);
+
+    return sys_abort_result;
+}
+
+int main(int argc, char **argv)
+{
+    message msg;
+    int result = -1;
+    int status = -1;
+
+    if (argc > 1) {
+        if (strcmp(argv[1], "reboot") == 0)
+            abort_how = RB_AUTOBOOT;
+        else if (strcmp(argv[1], "poweroff") == 0)
+            abort_how = RB_POWERDOWN;
+        else if (strcmp(argv[1], "halt") != 0)
+            printf("abortdemo: unknown mode '%s', using halt\n", argv[1]);
+    }
+
+    sef_setcb_init_fresh(sef_cb_init);
+    sef_setcb_init_lu(sef_cb_init);
+    sef_setcb_init_restart(sef_cb_init);
+    sef_startup();
+
+    /*
+     * Keep running until the system goes down; exiting now would make RS
+     * restart the service. A HARD_STOP notification arrives before shutdown.
+     */
+    for (;;) {
+        if ((result = sef_receive_status(ANY, &msg, &status)) != OK)
+            printf("abortdemo: sef_receive_status failed: %d\n", result);
+    }
+
+    return OK;
+}
+
+```

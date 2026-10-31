@@ -194,6 +194,7 @@
 ./etc/syslog.conf                                       minix-base
 ./etc/system.conf                                       minix-base
 ./etc/system.conf.d                                     minix-base
+./etc/system.conf.d/abortdemo                           minix-base
 ./etc/system.conf.d/hello                               minix-base
 ./etc/system.conf.d/inet                                minix-base      obsolete
 ./etc/system.conf.d/ipc                                 minix-base
@@ -273,6 +274,7 @@
 ./service/devman                                        minix-base
 ./service/ds                                            minix-base
 ./service/ext2                                          minix-base
+./service/abortdemo                                     minix-base
 ./service/hello                                         minix-base
 ./service/inet                                          minix-base      obsolete
 ./service/input                                         minix-base

@@ -36,7 +36,7 @@
  * WARNING: starting this service shuts the whole system down.
  *
  * Usage (as root):
- *   service up /service/abortdemo -config /etc/system.conf.d/abortdemo \
+  *   minix-service up /service/abortdemo -config /etc/system.conf.d/abortdemo \
  *       -args "halt|poweroff|reboot"
  *
  * Only system services whose configuration allows the ABORT kernel call

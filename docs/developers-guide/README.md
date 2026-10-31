@@ -167,10 +167,25 @@ A regular user program cannot call `sys_abort()`: the kernel checks the caller's
 The example service [`abortdemo`](../../minix/drivers/examples/abortdemo/abortdemo.c) shows the call in practice. Its [configuration](../../minix/drivers/examples/abortdemo/abortdemo.conf) grants the `ABORT` kernel call. **Starting it shuts the whole system down.** Run it as root, preferably in an emulator:
 
 ```bash
-service up /service/abortdemo -config /etc/system.conf.d/abortdemo -args "halt"
+minix-service up /service/abortdemo -config /etc/system.conf.d/abortdemo -args "halt"
 ```
 
 The argument selects the `how` value: `halt` (`RB_HALT`, the default), `poweroff` (`RB_POWERDOWN`) or `reboot` (`RB_AUTOBOOT`). About one second after the call, the kernel prints the shutdown message and stops the system as described above.
+
+###### Building the example without building the whole system
+
+After one full build of the system (see the main [README](../../README.md#building-the-system)), the toolchain and the installed libraries already exist in the object directory, so the example can be built on its own. The paths below assume the object directory `../obj.i386` used in the build command:
+
+```bash
+cd minix/drivers/examples/abortdemo
+TOOLDIR=$(ls -d ../../../../../obj.i386/tooldir*)
+$TOOLDIR/bin/nbmake-i386 obj    # only needed the first time
+$TOOLDIR/bin/nbmake-i386
+```
+
+The resulting static i386 executable is `../obj.i386/minix/drivers/examples/abortdemo/abortdemo`. To get it into the system, copy `abortdemo` to `/service/` and `abortdemo.conf` to `/etc/system.conf.d/abortdemo` on a running Minix3x, or run `$TOOLDIR/bin/nbmake-i386 install` to install both into the destination directory (`destdir`) and then create a new disk image as described in the main README.
+
+If you change a library such as `libsys`, rebuild and install it first in the same way (`nbmake-i386` and `nbmake-i386 install` in `minix/lib/libsys`); otherwise the example is linked against the previously installed version.
 
 ```cpp
 #include <minix/drivers.h>
